@@ -5,16 +5,11 @@ Disaster Material Supply Chain Analysis Project for Ministry of the Interior and
 ---
 
 ### 설치방법
-- 플랫폼 : 윈도우
+- 플랫폼 : 리눅스 (REHL 7.9)
+- 터미널에 ./setup.sh 입력
 
-- bin 폴더에 있는 python 3.10 을 설치
-
-- 환경변수 등록 
-  - cmd를 켠 후 python을 실행하여 3.10 버전 일치 확인
-  - where pip로 설치된 버전의 python과 일치함을 확인
-  
-- setup.bat 파일 실행
-  - 수행내역
-    - 분할압축된 whl 파일 압축풀기
-    - wheelhouse 존재하는 *.whl 파일 설치
-    
+### 가상환경 설정
+- 터미널에 ./activate.sh 입력
+ 
+### 테스트
+- 터미널에 ./test.sh 입력
