@@ -135,4 +135,4 @@ dmypy.json
 # 100MB 초과 파일은 깃헙에서 업로드 되지 않음
 windows/wheelhouse/tensorflow_intel-2.11.0-cp310-cp310-win_amd64.whl
 linux/wheelhouse/tensorflow_cpu-2.11.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
-linux/miniconda/miniconda
+linux/bi-venv/miniconda

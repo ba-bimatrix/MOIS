@@ -7,10 +7,7 @@ Disaster Material Supply Chain Analysis Project for Ministry of the Interior and
 ### 설치방법
 - 플랫폼 : 리눅스 (REHL 7.9)
 - 터미널에 chmod 777 ./setup.sh 입력하여 실행권한 부여
-- 터미널에 ./setup.sh 입력으로 설치 실행
-
-### 가상환경 설정
-- 터미널에 ./activate.sh 입력
+- 터미널에 source ./setup.sh 입력으로 설치 실행
  
 ### 테스트
 - 터미널에 ./test.sh 입력
