@@ -1,4 +1,7 @@
 # 미니콘다 설치
+chmod 777 ./linux/miniconda/miniconda.sh
+chmod 777 ./activate.sh
+chmod 777 ./test.sh
 ./linux/miniconda/miniconda.sh -b -p ./linux/miniconda/miniconda/
 
 # 가상환경 생성
