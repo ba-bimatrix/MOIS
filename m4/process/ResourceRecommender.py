@@ -5,26 +5,30 @@ from m4.ApplicationConfiguration import ApplicationConfiguration
 
 from surprise import Reader, Dataset
 from surprise import SVD, KNNWithZScore, KNNWithMeans, KNNBaseline, NMF, SlopeOne, CoClustering
-from surprise.model_selection import cross_validate, train_test_split
+from surprise.model_selection import cross_validate
+
 
 class ResourceRecommender(SingletonInstance):
 
-    _execute_date = None
+    _execute_date: object = None
+    _reco_dimension: list = None
+    _value_col: object = None
+    _clust_nm: object = None
 
     def __init__(self):
         """
         생성자
         """
         config = ApplicationConfiguration.instance()
+
         self._reco_dimension = config.parameter("RECO_DIMENSION")
         self._value_col = config.parameter("VALUE_COL")
         self._clust_nm = config.parameter("CLUSTER_COL")
         self._execute_date = config.parameter("EXECUTE_DATE")
 
-    def recommend(self, resource_data: pd.DataFrame):
-        """
-        recommend
-        :param : resource_data: DataFrame
+    def recommend(self, resource_data: pd.DataFrame) -> pd.DataFrame:
+        """Recommend item use surprise package(rating concept)
+        :param : resource_data: DataFrame (3 Kind of columns needed - user, item, ratings)
         :return: DataFrame
         """
         reader = Reader()
@@ -63,21 +67,21 @@ if __name__ == '__main__':
     print("Recommend test start")
     import pandas as pd
 
-    params = {
-        "EXECUTE_DATE": "202205",
-        "FORECAST_DIMENSION": ["ORGAN_CODE", "TOP_ORGAN", "FULL_ORGAN", "LWST_ORGAN"],
-        "SUPPLIES_COLUMNS": ["YYMM"],
-        "FORECAST_VALUE_COL": "VAL",
-
-        'MIN_N_CLUSTERS': 2,
-        'MAX_N_CLUSTERS': 10
+    test_params = {
+        "RECO_DIMENSION": ["ORGAN_CODE", "SUPPLIES_CODE", "VAL"],
+        "CLUSTER_COL": "CLUSTER",
+        "VALUE_COL": "VAL",
+        "EXECUTE_DATE": "202205"
     }
 
     config: ApplicationConfiguration = ApplicationConfiguration.instance()
-    config.init('m4.properties', params)
+    config.init('m4.properties', test_params)
 
-    data = pd.read_csv('..\..\data\data_source\input_data.csv', encoding='cp949')
+    test_data = pd.read_csv('..\..\data\data_source\input_data.csv', encoding='cp949')
+    test_data[test_params["CLUSTER_COL"]] = "TEST"
 
     recommender = ResourceRecommender()
-    print(recommender.recommend(data))
+    print()
+    print("The result of recommend is")
+    print(recommender.recommend(test_data))
     print("Recommend test success")

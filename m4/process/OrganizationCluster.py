@@ -6,12 +6,13 @@ from m4.process.algorithm.ClusterAlgorithm import ClusterAlgorithm
 
 
 class OrganizationCluster(SingletonInstance):
-    _region_column = None
-    _clust_pk = None
-    _clust_nm = None
-    _min_n_clusters = None
-    _max_n_clusters = None
-    _execute_date = None
+
+    _region_column: str = None
+    _clust_pk: str = None
+    _clust_nm: str = None
+    _min_n_clusters: int = None
+    _max_n_clusters: int = None
+    _execute_date: str = None
 
     def __init__(self):
         """
@@ -26,19 +27,17 @@ class OrganizationCluster(SingletonInstance):
         self._max_n_clusters = config.parameter("MAX_N_CLUSTERS")
         self._execute_date = config.parameter("EXECUTE_DATE")
 
-    def cluster(self, organization_data: DataFrame, **region_info):
-        """
-        clustering
+    def cluster(self, organization_data: DataFrame) -> DataFrame:
+        """Clustering Organization feature data & add region info
         :param : organization_data: DataFrame
         :param : region_info: dict
         :return: DataFrame
         """
         result = organization_data.copy()
         result.set_index(keys=self._clust_pk + [self._region_column], inplace=True)
-        _cluster = ClusterAlgorithm()
-        result[self._clust_nm] = _cluster.clustering(result, {"MIN_N_CLUSTERS": self._min_n_clusters,
-                                                              "MAX_N_CLUSTERS": self._max_n_clusters
-                                                              })
+        cluster = ClusterAlgorithm()
+        result[self._clust_nm] = cluster.clustering(result, {"MIN_N_CLUSTERS": self._min_n_clusters,
+                                                             "MAX_N_CLUSTERS": self._max_n_clusters})
         result.reset_index(inplace=True)
 
         # temporary option
@@ -66,7 +65,8 @@ class OrganizationCluster(SingletonInstance):
             for region in region_info:
                 result.loc[result["TOP_ORGAN"] == region, self._region_column] = region_info[region]
 
-        result[self._clust_nm] = result[[self._region_column, self._clust_nm]].apply(lambda x: x[0] + '_' + str(x[1]), axis=1)
+        result[self._clust_nm] = result[[self._region_column, self._clust_nm]].apply(lambda x: x[0] + '_' + str(x[1]),
+                                                                                     axis=1)
 
         return result[self._clust_pk + [self._clust_nm]]
 
@@ -75,19 +75,26 @@ if __name__ == '__main__':
     print("Cluster test start")
     import pandas as pd
 
-    params = {
-        "EXECUTE_DATE": "202205",
-        'MIN_N_CLUSTERS': 2,
-        'MAX_N_CLUSTERS': 10
+    test_params = {
+        "REGION_COL": "REGION",
+        "CLUSTER_PK": ["ORGAN_CODE", "TOP_CODE", "TOP_ORGAN", "FULL_ORGAN", "LWST_ORGAN"],
+        "CLUSTER_COL": "CLUSTER",
+
+        "MIN_N_CLUSTERS": 2,
+        "MAX_N_CLUSTERS": 10,
+
+        "EXECUTE_DATE": "202205"
     }
 
     config: ApplicationConfiguration = ApplicationConfiguration.instance()
-    config.init('m4.properties', params)
+    config.init('m4.properties', test_params)
 
-    data = pd.read_csv('..\..\data\data_source\input_cluster_data.csv', encoding='cp949')
+    test_data = pd.read_csv('..\..\data\data_source\clust_data.csv', encoding='cp949')
 
-    cluster = OrganizationCluster()
-    result_cluster = cluster.cluster(data)
+    test_cluster = OrganizationCluster()
+    result_cluster = test_cluster.cluster(test_data)
+    print("test cluster dataframe output is")
     print(result_cluster)
-    print(len(result_cluster['CLUSTER'].unique()))
+    print()
+    print(f"The length of unique cluster number is {len(result_cluster['CLUSTER'].unique())}")
     print("Cluster test success")

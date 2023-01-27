@@ -15,7 +15,6 @@ from m4.process.StockingCalculation import StockingCalculation
 from m4.process.PostProcessor import PostProcessor
 
 import os
-
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
 
 """
@@ -24,7 +23,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
 """
 
 
-def pipe_line(data_source: AbstractDataSource):
+def pipe_line(data_source: AbstractDataSource) -> None:
     dataset = Dataset()
 
     data_access = DataAccess.instance()
@@ -34,14 +33,13 @@ def pipe_line(data_source: AbstractDataSource):
     dataset.resource_data = data_access.fetch_resource_data()
     dataset.input_data = data_access.fetch_input_data()
 
-    dataset = PreProcessor.instance().process_clust(dataset)
+    dataset = PreProcessor.instance().process_cluster(dataset)
     dataset.clustering = OrganizationCluster.instance().cluster(dataset.pre_processing_organization_data)
 
-    dataset = PreProcessor.instance().process_reco(dataset)
+    dataset = PreProcessor.instance().process_recommend(dataset)
     dataset.recommend = ResourceRecommender.instance().recommend(dataset.pre_processing_resource_data)
 
-    dataset = PreProcessor.instance().process_fcst(dataset)
-    print(dataset.pre_processing_input_data)
+    dataset = PreProcessor.instance().process_forecast(dataset)
     dataset.forecast = NecessaryForecast.instance().forecast(dataset.pre_processing_input_data)
 
     dataset.stocking_calculation = StockingCalculation.instance().calculation(dataset.pre_processing_input_data)
@@ -135,7 +133,6 @@ def main():
         logger.error(e)
     finally:
         pass
-
 
 if __name__ == '__main__':
     main()
