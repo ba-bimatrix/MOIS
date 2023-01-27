@@ -15,7 +15,7 @@ permissions:
 jobs:
     build:
 
-        runs-on: windows-latest
+        runs-on: ubuntu-latest
 
         steps:
             - uses: actions/checkout@v3
@@ -27,9 +27,11 @@ jobs:
               run: |
                   python -m pip install --upgrade pip
                   pip install flake8 pytest
-                  .\bin\Bandizip\bz x ".\wheelhouse\split\tensorflow_intel-2.11.0-cp310-cp310-win_amd64.zip"
-                  move "tensorflow_intel-2.11.0-cp310-cp310-win_amd64.whl" ".\wheelhouse\tensorflow_intel-2.11.0-cp310-cp310-win_amd64.whl"
-                  pip install --no-index --find-links=wheelhouse -r requirements-offline.txt
+                  
+                  cat ./linux/wheelhouse/split/tensorflow_cpu-2.11.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.tar.gz* | tar -zxvpf -
+                  mv tensorflow_cpu-2.11.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl ./linux/wheelhouse/3.10
+                  pip install --no-index --find-links=linux/wheelhouse -r requirements-offline-linux-3.10.txt
+
             - name: Lint with flake8
               run: |
                   # stop the build if there are Python syntax errors or undefined names
