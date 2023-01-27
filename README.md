@@ -6,6 +6,8 @@ Disaster Material Supply Chain Analysis Project for Ministry of the Interior and
 [![Py3.10 Build](https://github.com/ba-bimatrix/MOIS/actions/workflows/Py3.10%20Build.yml/badge.svg)](https://github.com/ba-bimatrix/MOIS/actions/workflows/Py3.10%20Build.yml)
 [![Py3.8 Build](https://github.com/ba-bimatrix/MOIS/actions/workflows/Py3.8%20Build.yml/badge.svg)](https://github.com/ba-bimatrix/MOIS/actions/workflows/Py3.8%20Build.yml)
 
+<br><br><br>
+
 # 설치방법
 - 플랫폼 : 리눅스 (REHL 7.9)
 
@@ -20,6 +22,8 @@ Disaster Material Supply Chain Analysis Project for Ministry of the Interior and
   예시) (mois310)~~$
 - 터미널에 다음을 입력하여 라이브러리 설치 실행 <br>
   예시) source ./setup_venv_3.10.sh
- 
+
+<br><br><br>
+
 # 테스트
 - 터미널에 ./test.sh 입력
