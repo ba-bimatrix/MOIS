@@ -34,36 +34,13 @@ class PreProcessor(SingletonInstance):
         self._region_column = config.parameter("REGION_COL")
         self._clust_nm = config.parameter("CLUSTER_COL")
 
-    def process_cluster(self, dataset: Dataset) -> Dataset:
-        """pre-processing for clustering
-        :param : dataset: Dataset
-        :return: dataset: Dataset
-        """
-        dataset.pre_processing_organization_data = self._agg_organ_data(dataset)
-
-        return dataset
-
-    @staticmethod
-    def _agg_organ_data(dataset: Dataset) -> pd.DataFrame:
-        """Aggregation organization feature data for clustering
-        :param : dataset: Dataset
-        :return: pd.Dataframe
-        """
-        if dataset.organization_data is None:
-            raise Exception("There is no organization's feature data for clustering. plz check")
-
-        result_df = dataset.organization_data
-
-        return result_df
-
     def process_recommend(self, dataset: Dataset) -> Dataset:
         """pre-processing for recommend
         :param : dataset: Dataset
         :return: dataset: Dataset
         """
-        dataframe = pd.merge(dataset.input_data, dataset.clustering, how='left', on=self._organ_pk)
-
-        dataset.pre_processing_resource_data = dataframe
+        dataset.pre_processing_resource_data = pd.merge(dataset.input_data, dataset.clustering, how='left',
+                                                        on=self._organ_pk)
 
         return dataset
 

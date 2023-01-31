@@ -33,8 +33,7 @@ def pipe_line(data_source: AbstractDataSource) -> None:
     dataset.resource_data = data_access.fetch_resource_data()
     dataset.input_data = data_access.fetch_input_data()
 
-    dataset = PreProcessor.instance().process_cluster(dataset)
-    dataset.clustering = OrganizationCluster.instance().cluster(dataset.pre_processing_organization_data)
+    dataset.clustering = OrganizationCluster.instance().cluster(dataset.organization_data)
 
     dataset = PreProcessor.instance().process_recommend(dataset)
     dataset.recommend = ResourceRecommender.instance().recommend(dataset.pre_processing_resource_data)

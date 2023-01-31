@@ -1,8 +1,11 @@
+import pandas as pd
 from pandas import DataFrame
+from sklearn.cluster import KMeans
+from sklearn.metrics import silhouette_score
 
-from m4.common.SingletonInstance import SingletonInstance
 from m4.ApplicationConfiguration import ApplicationConfiguration
-from m4.process.algorithm.ClusterAlgorithm import ClusterAlgorithm
+from m4.common.SingletonInstance import SingletonInstance
+from m4.util.LogHandler import LogHandler
 
 
 class OrganizationCluster(SingletonInstance):
@@ -13,6 +16,7 @@ class OrganizationCluster(SingletonInstance):
     _min_n_clusters: int = None
     _max_n_clusters: int = None
     _execute_date: str = None
+    _logger: LogHandler.get_logger = None
 
     def __init__(self):
         """
@@ -26,6 +30,7 @@ class OrganizationCluster(SingletonInstance):
         self._min_n_clusters = config.parameter("MIN_N_CLUSTERS")
         self._max_n_clusters = config.parameter("MAX_N_CLUSTERS")
         self._execute_date = config.parameter("EXECUTE_DATE")
+        self._logger = LogHandler.instance().get_logger()
 
     def cluster(self, organization_data: DataFrame) -> DataFrame:
         """Clustering Organization feature data & add region info
@@ -35,40 +40,58 @@ class OrganizationCluster(SingletonInstance):
         """
         result = organization_data.copy()
         result.set_index(keys=self._clust_pk + [self._region_column], inplace=True)
-        cluster = ClusterAlgorithm()
-        result[self._clust_nm] = cluster.clustering(result, {"MIN_N_CLUSTERS": self._min_n_clusters,
-                                                             "MAX_N_CLUSTERS": self._max_n_clusters})
+        result[self._clust_nm] = self._clustering(result, {"MIN_N_CLUSTERS": self._min_n_clusters,
+                                                           "MAX_N_CLUSTERS": self._max_n_clusters})
         result.reset_index(inplace=True)
 
-        # temporary option
         if self._region_column not in organization_data.columns:
-            # default setting
-            region_info = {
-                'Sejong': 'CCA',  # '충청권',
-                'Seoul': 'MPA',  # '수도권',
-                'Busan': 'YNA',  # '영남권',
-                'Daegu': 'YNA',  # '영남권',
-                'Incheon': 'MPA',  # '수도권',
-                'Gwangju': 'HNA',  # '호남권',
-                'Daejeon': 'CCA',  # '충청권',
-                'Ulsan': 'YNA',  # '영남권',
-                'Jeju-do': 'JJA',  # '제주권',
-                'Gyeonggi-do': 'MPA',  # '수도권',
-                'Gangwon-do': 'GWA',  # '강원권',
-                'Chungcheongbuk-do': 'CCA',  # '충청권',
-                'Chungcheongnam-do': 'CCA',  # '충청권',
-                'Jeollabuk-do': 'HNA',  # '호남권',
-                'Jeollanam-do': 'HNA',  # '호남권',
-                'Gyeongsangbuk-do': 'YNA',  # '영남권',
-                'Gyeongsangnam-do': 'YNA',  # '영남권'
-            }
-            for region in region_info:
-                result.loc[result["TOP_ORGAN"] == region, self._region_column] = region_info[region]
-
-        result[self._clust_nm] = result[[self._region_column, self._clust_nm]].apply(lambda x: x[0] + '_' + str(x[1]),
-                                                                                     axis=1)
+            self._logger.info('There is no REGION INFO for cluster. It could be a serius effect on clustering')
+        else:
+            result[self._clust_nm] = result[[self._region_column, self._clust_nm]]\
+                .apply(lambda x: x[0] + '_' + str(x[1]), axis=1)
 
         return result[self._clust_pk + [self._clust_nm]]
+
+    def _clustering(self, data: pd.DataFrame, params: dict) -> list:
+        """Clustering organization by feature data
+        :param : data: input_data(feature data, pk: object, feature: only int/float)
+        :param : params: Algorithm parameters(min/max cluster number)
+        :return: result: Clustering result
+        """
+        try:
+            min_n_clusters = params.get('MIN_N_CLUSTERS')
+            max_n_clusters = params.get('MAX_N_CLUSTERS')
+        except:
+            min_n_clusters = 2
+            max_n_clusters = 10
+
+        self._logger.info(f'defined min/max cluster number is {min_n_clusters} to {max_n_clusters}')
+
+        if min_n_clusters > max_n_clusters:
+            min_n_clusters = max_n_clusters
+            self._logger.info('min cluster number was changed, cause it is over the max number')
+
+        optimal_score = -2
+        optimal_n = min_n_clusters
+        self._logger.info('Process 1: Searching the optimal number of clusters')
+        for n_cluster in range(min_n_clusters, max_n_clusters, 1):
+            model = KMeans(n_clusters=n_cluster)
+            _result_cluster = model.fit_predict(data)
+            _silhouette_score = silhouette_score(data, _result_cluster)
+
+            if _silhouette_score > optimal_score:
+                optimal_score = _silhouette_score
+                optimal_n = n_cluster
+
+        if optimal_score == -2:
+            raise Exception(
+                "The silhouette score is -2. The range of score must be -1 to 1.\
+                 It is a result that cannot be calculated")
+
+        model = KMeans(n_clusters=optimal_n)
+        self._logger.info(f'The optimal number of clusters is {optimal_n}')
+
+        return model.fit_predict(data)
 
 
 if __name__ == '__main__':
