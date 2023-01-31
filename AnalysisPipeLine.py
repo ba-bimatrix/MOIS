@@ -108,7 +108,8 @@ def main():
     params.update(reco_params)
 
     config: ApplicationConfiguration = ApplicationConfiguration.instance()
-    config.init('m4.properties', params)
+    config.init('m4.properties')
+    config.parsing_properties()
 
     logHandler: LogHandler = LogHandler.instance()
     logHandler.init(config)

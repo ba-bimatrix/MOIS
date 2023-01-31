@@ -1,5 +1,6 @@
 import os
 import configparser
+from json import loads as json_loads, dumps as json_dumps
 
 from m4.common.SingletonInstance import SingletonInstance
 from m4.dao.AbstractDataSource import AbstractDataSource
@@ -26,9 +27,9 @@ class ApplicationConfiguration(SingletonInstance):
 
     def __init__(self):
         self._config = configparser.RawConfigParser()
-        self._config.optionxform = str
+        self._config.optionxform = lambda option: option
 
-    def init(self, properties_file, params):
+    def init(self, properties_file, **params):
         """
         ApplicationConfiguration 초기화
         :param properties_file : 어플리케이션 설치 정보 파일명
@@ -36,6 +37,44 @@ class ApplicationConfiguration(SingletonInstance):
         """
         self._config.read(os.path.join(self.PROPERTIES_FILE_PATH, properties_file))
         self._params = params
+
+    def parsing_properties(self) -> dict:
+        sections = self._config.sections()
+
+        params = {}
+        for section in sections:
+            for item in self._config[section]:
+                params[item.upper()] = self._config[section][item]
+
+        self._params = self._trans_format(params)
+
+        return None
+
+    def _trans_format(self, params: dict) -> dict:
+        params['LIST'] = json_loads(params['LIST'])
+        params['TUPLE'] = json_loads(params['TUPLE'])
+        params['INT'] = json_loads(params['INT'])
+        params['FLOAT'] = json_loads(params['FLOAT'])
+
+        for element in params['LIST']:
+            params[element] = json_loads(params[element])
+
+        for element in params['TUPLE']:
+            json_format = json_loads(json_dumps(json_loads(params[element])))
+            _ret = []
+
+            for n in range(len(json_format)):
+                _ret.append(tuple(json_format[n]))
+
+            params[element] = _ret
+
+        for element in params['INT']:
+            params[element] = int(params[element])
+
+        for element in params["FLOAT"]:
+            params[element] = float(params[element])
+
+        return params
 
     def parameter(self, name):
         """
@@ -93,3 +132,10 @@ class ApplicationConfiguration(SingletonInstance):
             self._add(section, items)
 
         session.close()
+
+
+if __name__ == '__main__':
+    test_config = ApplicationConfiguration.instance()
+    test_config.init('m4.properties')
+    test_config.parsing_properties()
+    print(test_config._params)
