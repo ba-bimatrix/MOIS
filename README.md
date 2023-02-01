@@ -1,7 +1,6 @@
-# MOIS Disaster Material Supply Chain Ananlysis
+# krms_forecast
 
-행정안전부(행안부) 재난물자 공급망 분석 프로젝트 \
-Disaster Material Supply Chain Analysis Project for Ministry of the Interior and Safety(MOIS)
+행정안전부(행안부) 재난물자 공급망 분석 프로젝트
 
 [![Py3.10 Build](https://github.com/ba-bimatrix/MOIS/actions/workflows/Py3.10%20Build.yml/badge.svg)](https://github.com/ba-bimatrix/MOIS/actions/workflows/Py3.10%20Build.yml)
 [![Py3.8 Build](https://github.com/ba-bimatrix/MOIS/actions/workflows/Py3.8%20Build.yml/badge.svg)](https://github.com/ba-bimatrix/MOIS/actions/workflows/Py3.8%20Build.yml)
