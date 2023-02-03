@@ -133,7 +133,4 @@ dmypy.json
 #m4_log.json
 
 # files over than 100MB
-windows/wheelhouse/tensorflow_intel-2.11.0-cp310-cp310-win_amd64.whl
-linux/wheelhouse/3.10/tensorflow_cpu-2.11.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
-linux/wheelhouse/3.8/tensorflow_cpu-2.11.0-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
-linux/bi-venv/miniconda
+linux/wheelhouse/tensorflow_cpu-2.11.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
