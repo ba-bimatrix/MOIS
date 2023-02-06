@@ -10,18 +10,15 @@
 - 플랫폼 : 리눅스 (REHL 7.9)
 
 - 가상환경 설치
-  <br>```./setup_venv.sh```
-  
-- 가상환경 활성화
-  <br>```conda activate forecast```
-  
+  <br>```bash -i setup_venv.sh```
+    
 - 라이브러리 설치 
-  <br> ```./setup_whl.sh```
+  <br> ```bash -i setup_whl.sh```
   
 <br><br><br>
 
 # 테스트
-- ```./test.sh```
+- ```bash -i test.sh```
 
 # 실행
-- ```./run.sh```
+- ```bash -i run.sh```
