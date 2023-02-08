@@ -1,10 +1,14 @@
 import pandas as pd
+import numpy as np
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
 from m4.ApplicationConfiguration import ApplicationConfiguration
 from m4.common.SingletonInstance import SingletonInstance
 from m4.process.Dataset import Dataset
+
+from sklearn.preprocessing import MinMaxScaler, StandardScaler, RobustScaler, OneHotEncoder
+from sklearn.compose import ColumnTransformer
 
 
 class PreProcessor(SingletonInstance):
@@ -24,6 +28,8 @@ class PreProcessor(SingletonInstance):
         생성자
         """
         config = ApplicationConfiguration.instance()
+
+        self._tmp_col = config.parameter("ORGANIZATION_STRUCTURE")  # temporary parameter
         self._organ_pk = config.parameter("ORGAN_PK")
         self._input_period = config.parameter("FORECAST_INPUT_PERIOD")
         self._columns = config.parameter("FORECAST_COLUMNS")
@@ -33,6 +39,41 @@ class PreProcessor(SingletonInstance):
         self._val_column = config.parameter("VALUE_COL")
         self._region_column = config.parameter("REGION_COL")
         self._clust_nm = config.parameter("CLUSTER_COL")
+
+    # TODO: 클러스터링 전처리 함수 개발 필요, 스케일링 및 집계
+    def process_cluster(self, dataset: Dataset) -> Dataset:
+        """pre-processing for cluster
+        :param dataset:
+        :return:
+        """
+        preprocess_df = self._aggregate_cluster(dataset.organization_data)
+
+        scaler = MinMaxScaler()
+        preprocess_df[['POPUL_CNT', 'HOHOLD_CNT', 'RESI_CNT', 'BUGE_AMT', 'FULL_SQUARE',
+                        'ROAD_SQUARE', 'CULT_SQUARE', 'FORE_SQUARE', 'RIVER_SQUARE', 'PBORD_AMT',
+                        'TRSPT_AMT', 'MNCP_AMT', 'LCPB_AMT', 'GVN_MNG_SQUARE', 'GVN_SPRT_SQUARE',
+                        'ETC_SQUARE', 'DMG_STORM_FLOOD_AMT']] = \
+         scaler.fit_transform(preprocess_df[['POPUL_CNT', 'HOHOLD_CNT', 'RESI_CNT', 'BUGE_AMT', 'FULL_SQUARE',
+                        'ROAD_SQUARE', 'CULT_SQUARE', 'FORE_SQUARE', 'RIVER_SQUARE', 'PBORD_AMT',
+                        'TRSPT_AMT', 'MNCP_AMT', 'LCPB_AMT', 'GVN_MNG_SQUARE', 'GVN_SPRT_SQUARE',
+                        'ETC_SQUARE', 'DMG_STORM_FLOOD_AMT']])
+        dataset.pre_processing_organization_data = preprocess_df
+
+        return dataset
+
+    def _aggregate_cluster(self, dataframe: pd.DataFrame) -> pd.DataFrame:
+        columns_map = {
+            'average': ['POPUL_CNT', 'HOHOLD_CNT', 'RESI_CNT', 'BUGE_AMT', 'FULL_SQUARE',
+                        'ROAD_SQUARE', 'CULT_SQUARE', 'FORE_SQUARE', 'RIVER_SQUARE', 'PBORD_AMT',
+                        'TRSPT_AMT', 'MNCP_AMT', 'LCPB_AMT', 'GVN_MNG_SQUARE', 'GVN_SPRT_SQUARE',
+                        'ETC_SQUARE', 'DMG_STORM_FLOOD_AMT'],
+            'get_last': ['REGION_CD', 'ADMDSTRC_CD', 'COAST_ADJ_AT', 'INLAND_CTY_AT', 'COAST_LEN']
+        }
+
+        return pd.concat(
+            [dataframe.groupby(self._organ_pk)[columns_map['average']].mean(),
+             dataframe[dataframe['STDR_YY'] == max(dataframe['STDR_YY'])][columns_map['get_last']+['ORG_CD']
+            ].set_index('ORG_CD')], axis=1).reset_index()
 
     def process_recommend(self, dataset: Dataset) -> Dataset:
         """pre-processing for recommend
@@ -49,12 +90,12 @@ class PreProcessor(SingletonInstance):
         :param : dataset: Dataset
         :return: dataset: Dataset
         """
-        dataset = self._sum_by_cluster(dataset, self._date_column)
+        dataset = self._avg_by_cluster(dataset, self._date_column)
         dataset = self._fill_zero_and_date(dataset)
 
         return dataset
 
-    def _sum_by_cluster(self, dataset: Dataset, *args: str) -> Dataset:
+    def _avg_by_cluster(self, dataset: Dataset, *args: str) -> Dataset:
         """Preprocessing before timeseries forecasting
         sum data by same cluster
         :param : dataset: Dataset
@@ -62,7 +103,7 @@ class PreProcessor(SingletonInstance):
         :return: dataset: Dataset
         """
         dataframe = pd.merge(dataset.input_data, dataset.clustering, how='left', on=self._organ_pk)
-        result_df = dataframe.groupby([self._clust_nm] + list(args), as_index=False)[self._val_column].sum()
+        result_df = dataframe.groupby([self._clust_nm] + list(args), as_index=False)[self._val_column].mean()
 
         dataset.pre_processing_input_data = result_df
 

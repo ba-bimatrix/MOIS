@@ -10,14 +10,15 @@ class OrganizationDAO(AbstractDAO, SingletonInstance):
     Organization Data Access Object
     """
 
-    def read(self, session: AbstractSession, *params):
+    def read(self, session: AbstractSession, param):
         """
         Data Source로부터 리스트 데이터를 조회
         :param session: AbstractSession 인스턴스
         :param params: 파라미터 데이터
         :return: DataFrame
         """
-        select_query = """
+        select_query = \
+        """
         WITH ANALY_PERIOD AS (
                     SELECT TO_CHAR(ADD_MONTHS(SYSDATE, -LEVEL*12),'YYYY') AS STDR_YY 
                         FROM DUAL CONNECT BY LEVEL<=?
@@ -43,7 +44,31 @@ class OrganizationDAO(AbstractDAO, SingletonInstance):
                               GROUP BY STDR_YY) AS CPRN
                      ON STND.STDR_YY=CPRN.STDR_YY
         )
-        SELECT *
+        SELECT 
+                STDR_YY,
+                ORG_CD,
+                POPUL_CNT,
+                HOHOLD_CNT,
+                RESI_CNT,
+                BUGE_AMT,
+                REGION_CD,
+                ADMDSTRC_CD,
+                FULL_SQUARE,
+                ROAD_SQUARE,
+                CULT_SQUARE,
+                FORE_SQUARE,
+                RIVER_SQUARE,
+                COAST_ADJ_AT,
+                INLAND_CTY_AT,
+                PBORD_AMT,
+                TRSPT_AMT,
+                MNCP_AMT,
+                LCPB_AMT,
+                COAST_LEN,
+                GVN_MNG_SQUARE,
+                GVN_SPRT_SQUARE,
+                ETC_SQUARE,
+                DMG_STORM_FLOOD_AMT
             FROM TIBERO.TSC_FORST_ORG_CRTCT_INFO
          WHERE STDR_YY IN (SELECT ANALY_PERIOD.STDR_YY
                                 FROM ANALY_PERIOD JOIN CONSIS_CHECK
@@ -52,7 +77,7 @@ class OrganizationDAO(AbstractDAO, SingletonInstance):
                           )
         """
 
-        result = session.select(select_query, list(params))
+        result = session.select(select_query, param)
 
         return pd.DataFrame(data=result['data'], columns=result['columns'])
 

@@ -1,7 +1,7 @@
 
 from abc import *
 
-# TODO: AbstractDataSource, Tibero has no DataSource class yet
+
 class AbstractDataSource(metaclass=ABCMeta):
     """
     Abstract Data Source Object

@@ -5,8 +5,10 @@ from m4.dao.AbstractDataSource import AbstractDataSource
 from m4.dao.AbstractSession import AbstractSession
 from m4.dao.FileInputDAO import FileInputDAO as InputDAO
 # from m4.dao.FileOrganizationDAO import FileOrganizationDAO as OrganizationDAO
+from m4.dao.TiberoSqlSession import TiberoSqlSession
 from m4.dao.OrganizationDAO import OrganizationDAO as OrganizationDAO
 from m4.dao.FileResourceDAO import FileResourceDAO as ResourceDAO
+from m4.ApplicationConfiguration import ApplicationConfiguration
 
 class DataAccess(SingletonInstance):
 
@@ -19,13 +21,18 @@ class DataAccess(SingletonInstance):
     _resource_dao: ResourceDAO = ResourceDAO.instance()
 
     def init(self, data_source: AbstractDataSource):
+
+        config = ApplicationConfiguration.instance()
+
+        self._load_period = config.parameter("LOAD_PERIOD")
         self._data_source = data_source
-        self._session = data_source.get_session()
+        # self._session = data_source.get_session()
+        self._session = TiberoSqlSession()
+        self._session.get_connection()
 
     def get_session(self):
         return self._session
 
-    # TODO: Select from Tibero
     def fetch_organization_data(self):
         """
         organization data 조회
@@ -33,7 +40,7 @@ class DataAccess(SingletonInstance):
         :return: DataFrame
         """
 
-        return self._organization_dao.read(self._session)
+        return self._organization_dao.read(self._session, self._load_period)
 
     def fetch_resource_data(self):
         """
