@@ -4,7 +4,8 @@ from m4.common.SingletonInstance import SingletonInstance
 from m4.dao.AbstractDataSource import AbstractDataSource
 from m4.dao.AbstractSession import AbstractSession
 from m4.dao.FileInputDAO import FileInputDAO as InputDAO
-from m4.dao.FileOrganizationDAO import FileOrganizationDAO as OrganizationDAO
+# from m4.dao.FileOrganizationDAO import FileOrganizationDAO as OrganizationDAO
+from m4.dao.OrganizationDAO import OrganizationDAO as OrganizationDAO
 from m4.dao.FileResourceDAO import FileResourceDAO as ResourceDAO
 
 class DataAccess(SingletonInstance):
@@ -24,6 +25,7 @@ class DataAccess(SingletonInstance):
     def get_session(self):
         return self._session
 
+    # TODO: Select from Tibero
     def fetch_organization_data(self):
         """
         organization data 조회
@@ -82,4 +84,3 @@ class DataAccess(SingletonInstance):
         :return:
         """
         pass
-
