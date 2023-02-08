@@ -1,4 +1,5 @@
 from m4.ApplicationConfiguration import ApplicationConfiguration
+from m4.dao.TiberoDataSource import TiberoDataSource
 from m4.util.LogHandler import LogHandler
 from m4.dao.DataSourceError import DataSourceError
 from m4.process.ProcessException import ProcessException
@@ -15,6 +16,7 @@ from m4.process.StockingCalculation import StockingCalculation
 from m4.process.PostProcessor import PostProcessor
 
 import os
+
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
 
 """
@@ -121,11 +123,14 @@ def main():
         # TODO: Tibero DB Access
         #        oracle_data_source: OracleDataSource = OracleDataSource.instance()
         #        oracle_data_source.init(config)
-        csv_data_source: FileDataSource = FileDataSource.instance()
-        csv_data_source.init(config)
+        # data_source: FileDataSource = FileDataSource.instance()
+        # data_source.init(config)
+        data_source = TiberoDataSource.instance()
+        data_source.init(config)
+
 
         logger.info("pipeline started")
-        pipe_line(csv_data_source)
+        pipe_line(data_source)
         logger.info("pipeline ended")
 
     except DataSourceError as e:
@@ -134,6 +139,7 @@ def main():
         logger.error(e)
     finally:
         pass
+
 
 if __name__ == '__main__':
     main()
