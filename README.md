@@ -9,8 +9,6 @@
 # 설치방법
 - 플랫폼 : 리눅스 (REHL 7.9)
 - ```bash -i setup.sh```
-  
-<br><br><br>
 
 # 테스트
 - ```bash -i test.sh```
