@@ -10,13 +10,16 @@ class OrganizationDAO(AbstractDAO, SingletonInstance):
     Organization Data Access Object
     """
 
-    def read(self, session: AbstractSession, *params):
+    def read(self, session: AbstractSession, params=None):
         """
         Data Source로부터 리스트 데이터를 조회
         :param session: AbstractSession 인스턴스
         :param params: 파라미터 데이터
         :return: DataFrame
         """
+        if params is None:
+            params = []
+
         select_query = """
         WITH ANALY_PERIOD AS (
                     SELECT TO_CHAR(ADD_MONTHS(SYSDATE, -LEVEL*12),'YYYY') AS STDR_YY 
@@ -52,10 +55,9 @@ class OrganizationDAO(AbstractDAO, SingletonInstance):
                           )
         """
 
-        result = session.select(select_query, list(params))
+        result = session.select(select_query, params)
 
         return pd.DataFrame(data=result['data'], columns=result['columns'])
-
 
     def execute(self, session: AbstractSession, sql_template: str, data_list: list):
         """

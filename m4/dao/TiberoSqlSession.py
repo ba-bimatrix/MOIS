@@ -6,6 +6,7 @@ from m4.dao.AbstractSession import AbstractSession
 from m4.dao.DataSourceError import DataSourceError
 from m4.ApplicationConfiguration import ApplicationConfiguration
 
+
 class TiberoSqlSession(AbstractSession):
     """
     Tibero Sql Session 클래스
@@ -14,26 +15,30 @@ class TiberoSqlSession(AbstractSession):
     _data_source: AbstractDataSource = None
 
     # Tibero connection information
-    _connection: jp.connect = None
+    _connection: jp.Connection = None
+    _cursor: jp.Cursor = None
 
     def __init__(self):
         """
         생성자 : SqlSession
         """
-        config = ApplicationConfiguration.instance()
 
-        self._jclassname = config.parameter("DS.CONNECTION.JCLASSNM")
-        self._url = config.parameter("DS.CONNECTION.URL")
-        self._driver_args = {'user': config.parameter("DS.CONNECTION.USER"),
-                             'password': config.parameter("DS.CONNECTION.PW")}
-        self._jars = config.parameter("DS.CONNECTION.JDBCPATH")
+    def init(self, data_source: AbstractDataSource, conn_ref: list):
+        connection: jp.Connection = conn_ref[0]
+
+        self._data_source = data_source
+        if connection:
+            self._connection = connection
+        else:
+            connection = jp.connect(data_source._jclassname, data_source._url, data_source._driver_args, data_source._jars)
+            self._connection = connection
+            self._cursor = self._connection.cursor()
 
     def get_connection(self):
         """
         Data Source Connection 객체를 반환
         """
-
-        self._connection = jp.connect(self._jclassname, self._url, self._driver_args, self._jars)
+        return self._connection
 
     def commit(self):
         """
@@ -52,9 +57,12 @@ class TiberoSqlSession(AbstractSession):
         생성된 세션을 반환, Data Source 접속을 해제하는 처리
         :return: void
         """
-        self._connection.close()
+        if self._cursor:
+            self._cursor.close()
+        if self._connection:
+            self._connection.close()
 
-    def select(self, sql: str, *params) -> None:
+    def select(self, sql: str, params) -> None:
         """
         Data Source로부터 Query문 결과 Array를 가져오는 처리
         :param sql: sql string
@@ -64,17 +72,20 @@ class TiberoSqlSession(AbstractSession):
         if self._connection is None:
             raise DataSourceError('Data Source session is not initialized')
 
-        try:
-            cursor = self._connection.cursor()
-            cursor.execute(sql, params or {})
-            columns = [d[0] for d in cursor.description]
-            result = cursor.fetchall()
+        if params is None:
+            params = {}
 
-            return {"columns": columns, "data": result}
-        except jp.DatabaseError as e:
-            error, = e.args
-            error_code = error.code
-            raise DataSourceError("Tibero database select Error", e, error_code)
+        # try:
+        cursor = self._connection.cursor()
+        cursor.execute(sql, params)
+        columns = [d[0] for d in cursor.description]
+        result = cursor.fetchall()
+
+        return {"columns": columns, "data": result}
+        # except jp.DatabaseError as e:
+        #     error, = e.args
+        #     error_code = error.code
+        #     raise DataSourceError("Tibero database select Error", e, error_code)
 
     def execute(self, sql_template: str, data_list: list) -> None:
         """
@@ -104,7 +115,7 @@ class TiberoSqlSession(AbstractSession):
         :param params: procedure 파라미터
         :return: True/False : 성공 여부
        """
-        if len(variables)!=0:
+        if len(variables) != 0:
             _variables = ','.join(['?' for i in range(len(variables))])
             procedure = procedure_name + _variables
         else:
@@ -135,7 +146,7 @@ if __name__ == '__main__':
 
     # DB Connecting
     test_session = TiberoSqlSession()
-    test_session.get_connection()
+    test_session.init()
 
     # Select test
     result = test_session.select("SELECT ID, NAME FROM TIBERO.TMP")
@@ -147,4 +158,3 @@ if __name__ == '__main__':
 
     # close
     test_session.close()
-
