@@ -8,12 +8,7 @@
 
 # 설치방법
 - 플랫폼 : 리눅스 (REHL 7.9)
-
-- 가상환경 설치
-  <br>```bash -i setup_venv.sh```
-    
-- 라이브러리 설치 
-  <br> ```bash -i setup_whl.sh```
+- ```bash -i setup.sh```
   
 <br><br><br>
 
