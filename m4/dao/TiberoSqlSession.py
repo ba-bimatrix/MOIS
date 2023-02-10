@@ -62,7 +62,7 @@ class TiberoSqlSession(AbstractSession):
         if self._connection:
             self._connection.close()
 
-    def select(self, sql: str, params) -> None:
+    def select(self, sql: str, *params) -> None:
         """
         Data Source로부터 Query문 결과 Array를 가져오는 처리
         :param sql: sql string

@@ -81,13 +81,32 @@ class OrganizationDAO(AbstractDAO, SingletonInstance):
 
         return pd.DataFrame(data=result['data'], columns=result['columns'])
 
-
-    def execute(self, session: AbstractSession, sql_template: str, data_list: list):
+    def execute(self, session: AbstractSession, data: pd.DataFrame) -> bool:
         """
         Data Source에 대한 CUD를 실행
         :param session: AbstractSession 인스턴스
-        :param sql_template: sql template string
         :param data_list: CUD 대상 데이터
         :return: True/False
         """
-        pass
+        delete_query = \
+        """
+        DELETE FROM TIBERO.TSC_FORST_ORG_GROUP
+        WHERE STDR_YY = ?
+          AND ORG_CD  = ?
+          AND ORG_GROUP_ID = ?
+        """
+        insert_query = \
+        """
+        INSERT INTO TIBERO.TSC_FORST_ORG_GROUP 
+        (STDR_YY, ORG_CD, ORG_GROUP_ID, FORST_AT, CRTR_ID, LAST_MODUSR_ID, CREAT_DT, LAST_MODF_DT) 
+        VALUES 
+        (?,?,?,?,?,?,?,?)
+        """
+        delete_data = data[['STDR_YY', 'ORG_CD', 'ORG_GROUP_ID']].drop_duplicates().values.tolist()
+        insert_data = data.values.tolist()
+        try:
+            session.execute(delete_query, delete_data)
+            session.execute(insert_query, insert_data)
+            return True
+        except:
+            return False

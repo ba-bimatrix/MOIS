@@ -31,6 +31,7 @@ class PreProcessor(SingletonInstance):
 
         self._tmp_col = config.parameter("ORGANIZATION_STRUCTURE")  # temporary parameter
         self._organ_pk = config.parameter("ORGAN_PK")
+        self._mater_pk = config.parameter("MATER_PK")
         self._input_period = config.parameter("FORECAST_INPUT_PERIOD")
         self._columns = config.parameter("FORECAST_COLUMNS")
         self._dimension = config.parameter("FORECAST_DIMENSION")
@@ -40,7 +41,7 @@ class PreProcessor(SingletonInstance):
         self._region_column = config.parameter("REGION_COL")
         self._clust_nm = config.parameter("CLUSTER_COL")
 
-    # TODO: 클러스터링 전처리 함수 개발 필요, 스케일링 및 집계
+    # TODO: 범주형 자료 원핫 인코딩 및 다른 최적 스케일링 추가 필요 + 리팩토링 필요
     def process_cluster(self, dataset: Dataset) -> Dataset:
         """pre-processing for cluster
         :param dataset:
@@ -103,7 +104,7 @@ class PreProcessor(SingletonInstance):
         :return: dataset: Dataset
         """
         dataframe = pd.merge(dataset.input_data, dataset.clustering, how='left', on=self._organ_pk)
-        result_df = dataframe.groupby([self._clust_nm] + list(args), as_index=False)[self._val_column].mean()
+        result_df = dataframe.groupby([self._clust_nm] + self._mater_pk + list(args), as_index=False)[self._val_column].mean()
 
         dataset.pre_processing_input_data = result_df
 

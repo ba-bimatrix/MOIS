@@ -3,12 +3,11 @@ from pandas import DataFrame
 from m4.common.SingletonInstance import SingletonInstance
 from m4.dao.AbstractDataSource import AbstractDataSource
 from m4.dao.AbstractSession import AbstractSession
-from m4.dao.FileInputDAO import FileInputDAO as InputDAO
-# from m4.dao.FileOrganizationDAO import FileOrganizationDAO as OrganizationDAO
-from m4.dao.TiberoSqlSession import TiberoSqlSession
+from m4.dao.InputDAO import InputDAO as InputDAO
 from m4.dao.OrganizationDAO import OrganizationDAO as OrganizationDAO
-from m4.dao.FileResourceDAO import FileResourceDAO as ResourceDAO
+from m4.dao.ResourceDAO import ResourceDAO as ResourceDAO
 from m4.ApplicationConfiguration import ApplicationConfiguration
+from m4.util.LogHandler import LogHandler
 
 class DataAccess(SingletonInstance):
 
@@ -26,9 +25,8 @@ class DataAccess(SingletonInstance):
 
         self._load_period = config.parameter("LOAD_PERIOD")
         self._data_source = data_source
-        # self._session = data_source.get_session()
-        self._session = TiberoSqlSession()
-        self._session.get_connection()
+        self._session = data_source.get_session()
+        self._logger = LogHandler.instance().get_logger()
 
     def get_session(self):
         return self._session
@@ -41,7 +39,8 @@ class DataAccess(SingletonInstance):
         """
 
         return self._organization_dao.read(self._session, self._load_period)
-
+    
+    # TODO: 추천용 데이터 DB에서 불러오기 기능 필요
     def fetch_resource_data(self):
         """
         resource data 조회
@@ -50,7 +49,8 @@ class DataAccess(SingletonInstance):
         """
 
         return self._resource_dao.read(self._session)
-
+    
+    # TODO: 예측용 데이터 DB에서 불러오기 기능 필요
     def fetch_input_data(self):
         """
         input data 조회
@@ -66,7 +66,13 @@ class DataAccess(SingletonInstance):
         :param : forecast : DataFrame
         :return:
         """
-        pass
+
+        result_msg = self._input_dao.execute(self._session, forecast)
+        if result_msg:
+            result_msg = 'Success'
+        else:
+            result_msg = 'Fail'
+        self._logger.info(f'Saving forecast result is {result_msg}')
 
     def save_clustering(self, clustering: DataFrame):
         """
@@ -74,7 +80,12 @@ class DataAccess(SingletonInstance):
         :param : clustering : DataFrame
         :return:
         """
-        pass
+        result_msg = self._organization_dao.execute(self._session, clustering)
+        if result_msg:
+            result_msg = 'Success'
+        else:
+            result_msg = 'Fail'
+        self._logger.info(f'Saving clustering result is {result_msg}')
 
     def save_recommend(self, recommend: DataFrame):
         """
@@ -82,7 +93,12 @@ class DataAccess(SingletonInstance):
         :param : recommend : DataFrame
         :return:
         """
-        pass
+        result_msg = self._resource_dao.execute(self._session, recommend)
+        if result_msg:
+            result_msg = 'Success'
+        else:
+            result_msg = 'Fail'
+        self._logger.info(f'Saving recommend result is {result_msg}')
 
     def save_stocking_calculation(self, stocking_calculation: DataFrame):
         """

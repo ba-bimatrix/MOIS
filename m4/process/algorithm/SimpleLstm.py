@@ -127,7 +127,7 @@ class SimpleLstm(AbstractAlgorithm, SingletonInstance):
 
         # # Predict
         self._logger.info('Process 7 : predict and calculate accuracy')
-        fcst_dataset = pd.DataFrame(columns=forecast_dataset_columns)
+        fcst_dataset = pd.DataFrame(columns=forecast_dataset_columns + ['index'])
         accu_dataset = pd.DataFrame(columns=validateion_dataset_columns)
 
         for name, splict in input_data.groupby(dimension):
@@ -171,7 +171,7 @@ class SimpleLstm(AbstractAlgorithm, SingletonInstance):
             one_fcst = pd.DataFrame(columns=forecast_dataset_columns, data=pred_data)
             one_accu = pd.DataFrame(columns=validateion_dataset_columns, data=[dim_data + [self.get_name(), test_predict_val.flatten()[0]]])
 
-            fcst_dataset = pd.concat((fcst_dataset, one_fcst))
+            fcst_dataset = pd.concat((fcst_dataset, one_fcst.reset_index()))
             accu_dataset = pd.concat((accu_dataset, one_accu))
 
         self._logger.debug(fcst_dataset.head(5))
