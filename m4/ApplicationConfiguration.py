@@ -84,6 +84,9 @@ class ApplicationConfiguration(SingletonInstance):
         """
         return self._params[name]
 
+    def add_params(self, name, value):
+        self._params[name] = value
+
     def find(self, section, name):
         """
         섹션명, 설정명으로 설정 검색

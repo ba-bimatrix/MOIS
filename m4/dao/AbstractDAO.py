@@ -14,7 +14,8 @@ class AbstractDAO(metaclass=ABCMeta):
         """
          Data Source의 조회 결과를 dict 형식으로 변환(필요 시)
          {"columns" : columns, "data" : list} =>
-         [{"column_name" : value, "column_name" : value, ...}, {"column_name" : value, "column_name" : value, ...}, {"column_name" : value, "column_name" : value, ...}, ...]
+         [{"column_name" : value, "column_name" : value, ...}, {"column_name" : value, "column_name" : value, ...},
+          {"column_name" : value, "column_name" : value, ...}, ...]
          :rtype: list
          :param inp : 조회 결과({"columns" : columns, "data" : list})
          :return dict array

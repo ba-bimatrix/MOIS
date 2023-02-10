@@ -31,6 +31,7 @@ def pipe_line(data_source: AbstractDataSource) -> None:
 
     data_access = DataAccess.instance()
     data_access.init(data_source)
+    data_access.check_hist()
 
     dataset.organization_data = data_access.fetch_organization_data()
     dataset.resource_data = data_access.fetch_resource_data()
@@ -53,6 +54,8 @@ def pipe_line(data_source: AbstractDataSource) -> None:
     data_access.save_recommend(dataset.recommend)
     data_access.save_forecast(dataset.forecast)
     data_access.save_stocking_calculation(dataset.stocking_calculation)
+    data_access.close_process()
+
 
 def main():
     config: ApplicationConfiguration = ApplicationConfiguration.instance()
@@ -72,7 +75,6 @@ def main():
         logger.info("pipeline started")
         pipe_line(data_source)
         logger.info("pipeline ended")
-
     except DataSourceError as e:
         logger.error(e)
     except ProcessException as e:

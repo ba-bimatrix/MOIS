@@ -1,4 +1,3 @@
-import jaydebeapi as jp
 
 from m4.common.SingletonInstance import SingletonInstance
 from m4.dao.AbstractDataSource import AbstractDataSource
