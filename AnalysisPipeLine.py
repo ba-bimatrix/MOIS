@@ -34,7 +34,6 @@ def pipe_line(data_source: AbstractDataSource) -> None:
     data_access.init(data_source)
 
     if sys.argv[1]:
-        print("Run sh")
         data_access.check_hist()
 
     dataset.organization_data = data_access.fetch_organization_data()
