@@ -2,6 +2,7 @@
 from abc import *
 
 from ..dao.AbstractSession import AbstractSession
+from pandas import DataFrame
 
 
 class AbstractDAO(metaclass=ABCMeta):
@@ -49,11 +50,10 @@ class AbstractDAO(metaclass=ABCMeta):
         return res
 
     @abstractmethod
-    def execute(self, session: AbstractSession, sql_template: str, data_list: list):
+    def execute(self, session: AbstractSession, data: DataFrame):
         """
         Data Source에 대한 CUD를 실행
         :param session: AbstractSession 인스턴스
-        :param sql_template: sql template string
-        :param data_list: CUD 대상 데이터
+        :param data: CUD 대상 데이터
         :return: True/False
         """

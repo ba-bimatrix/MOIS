@@ -1,10 +1,8 @@
 import jaydebeapi as jp
-import pandas as pd
 
 from m4.dao.AbstractDataSource import AbstractDataSource
 from m4.dao.AbstractSession import AbstractSession
 from m4.dao.DataSourceError import DataSourceError
-from m4.ApplicationConfiguration import ApplicationConfiguration
 
 
 class TiberoSqlSession(AbstractSession):
@@ -30,7 +28,8 @@ class TiberoSqlSession(AbstractSession):
         if connection:
             self._connection = connection
         else:
-            connection = jp.connect(data_source._jclassname, data_source._url, data_source._driver_args, data_source._jars)
+            connection = jp.connect(data_source._jclassname, data_source._url, data_source._driver_args,
+                                    data_source._jars)
             self._connection = connection
             self._cursor = self._connection.cursor()
 
@@ -62,7 +61,7 @@ class TiberoSqlSession(AbstractSession):
         if self._connection:
             self._connection.close()
 
-    def select(self, sql: str, *params) -> None:
+    def select(self, sql: str, *params) -> dict:
         """
         Data Source로부터 Query문 결과 Array를 가져오는 처리
         :param sql: sql string
@@ -79,15 +78,15 @@ class TiberoSqlSession(AbstractSession):
         cursor = self._connection.cursor()
         cursor.execute(sql, params)
         columns = [d[0] for d in cursor.description]
-        result = cursor.fetchall()
+        result_data = cursor.fetchall()
 
-        return {"columns": columns, "data": result}
+        return {"columns": columns, "data": result_data}
         # except jp.DatabaseError as e:
         #     error, = e.args
         #     error_code = error.code
         #     raise DataSourceError("Tibero database select Error", e, error_code)
 
-    def execute(self, sql_template: str, data_list: list) -> None:
+    def execute(self, sql_template: str, data_list: list) -> bool:
         """
         CRUD 쿼리문을 실행하는 처리
         :param sql_template: sql template
@@ -96,9 +95,9 @@ class TiberoSqlSession(AbstractSession):
         """
         if self._connection is None:
             raise DataSourceError('Data Source session is not initialized')
+        cursor = self._connection.cursor()
 
         try:
-            cursor = self._connection.cursor()
             cursor.executemany(sql_template, data_list)
             self._connection.commit()
             return True
@@ -108,11 +107,11 @@ class TiberoSqlSession(AbstractSession):
             print("Row", cursor.rowcount, "has error", error.message)
             raise DataSourceError("Tibero database execute Error", error_code)
 
-    def execute_procedure(self, procedure_name: str, *variables) -> None:
+    def execute_procedure(self, procedure_name: str, *variables) -> bool:
         """
         DB 에 저장된 프로시져를 호출하는 처리
         :param procedure_name: procedure name
-        :param params: procedure 파라미터
+        :param variables: procedure 파라미터
         :return: True/False : 성공 여부
        """
         if len(variables) != 0:
@@ -134,27 +133,3 @@ class TiberoSqlSession(AbstractSession):
             error_code = error.code
             print(f"{procedure_name} has error {error.message}")
             raise DataSourceError("Tibero database call procedure Error", error_code)
-
-
-if __name__ == '__main__':
-    print("Tibero connecting test start")
-
-    # db connect info
-    config: ApplicationConfiguration = ApplicationConfiguration.instance()
-    config.init('m4.properties')
-    config.parsing_properties()
-
-    # DB Connecting
-    test_session = TiberoSqlSession()
-    test_session.init()
-
-    # Select test
-    result = test_session.select("SELECT ID, NAME FROM TIBERO.TMP")
-    print(result)
-    print(pd.DataFrame(result['data'], columns=result['columns']))
-
-    # Insert test
-    # test_session.execute("INSERT INTO TIBERO.TMP (ID, NAME) VALUES (?, ?)", [(3, 'insert test')])
-
-    # close
-    test_session.close()

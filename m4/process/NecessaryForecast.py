@@ -52,9 +52,11 @@ class NecessaryForecast(SingletonInstance):
         """
         config = ApplicationConfiguration.instance()
 
-        result, accuracy = self._forecast(ExponentialSmoothing.instance(), input_data, {"smoothing_level": config.parameter("SMOOTHING_LEVEL")})
+        result, accuracy = self._forecast(ExponentialSmoothing.instance(), input_data,
+                                          {"smoothing_level": config.parameter("SMOOTHING_LEVEL")})
 
-        one_result, one_accu = self._forecast(HoltWinters.instance(), input_data, {"seasonal_periods": config.parameter("SEASONALITY_PERIOD")})
+        one_result, one_accu = self._forecast(HoltWinters.instance(), input_data,
+                                              {"seasonal_periods": config.parameter("SEASONALITY_PERIOD")})
         result = pd.concat((result, one_result))
         accuracy = pd.concat((accuracy, one_accu))
 
@@ -62,7 +64,8 @@ class NecessaryForecast(SingletonInstance):
         result = pd.concat((result, one_result))
         accuracy = pd.concat((accuracy, one_accu))
 
-        one_result, one_accu = self._forecast(Arima.instance(), input_data, {"arima_orders": config.parameter("ARIMA_ORDER")})
+        one_result, one_accu = self._forecast(Arima.instance(), input_data,
+                                              {"arima_orders": config.parameter("ARIMA_ORDER")})
         result = pd.concat((result, one_result))
         accuracy = pd.concat((accuracy, one_accu))
 
@@ -97,15 +100,16 @@ class NecessaryForecast(SingletonInstance):
         warnings.filterwarnings('ignore')
 
         for dim_values, splitted_data in input_data.groupby(self._dimension):
-            y_hat, valid = algorithm.forecast(splitted_data[self._value_column][-self._input_period:], self._forecast_period, self._validation_period,
-                                              params)
+            y_hat, valid = algorithm.forecast(splitted_data[self._value_column][-self._input_period:],
+                                              self._forecast_period, self._validation_period, params)
 
             if len(y_hat) == 0:
                 continue
             dim_data = list(dim_values) if type(dim_values) is tuple else [dim_values]
             pred_data = list(map(lambda x: dim_data + [algorithm.get_name(), x], y_hat))
             one_fcst = pd.DataFrame(columns=self._forecast_dataset_columns, data=pred_data)
-            one_accu = pd.DataFrame(columns=self._validateion_dataset_columns, data=[dim_data + [algorithm.get_name()] + valid])
+            one_accu = pd.DataFrame(columns=self._validateion_dataset_columns,
+                                    data=[dim_data + [algorithm.get_name()] + valid])
 
             fcst_dataset = pd.concat((fcst_dataset, one_fcst))
             accu_dataset = pd.concat((accu_dataset, one_accu))
@@ -130,6 +134,7 @@ class NecessaryForecast(SingletonInstance):
         if algorithm.get_name() not in self._algorithms:
             return fcst_dataset, accu_dataset
 
-        fcst_dataset, accu_dataset = algorithm.forecast(input_data, self._forecast_period, self._validation_period, params)
+        fcst_dataset, accu_dataset = algorithm.forecast(input_data, self._forecast_period, self._validation_period,
+                                                        params)
 
         return fcst_dataset, accu_dataset

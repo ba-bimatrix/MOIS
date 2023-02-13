@@ -15,6 +15,7 @@ from m4.process.StockingCalculation import StockingCalculation
 from m4.process.PostProcessor import PostProcessor
 
 import os
+import sys
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
@@ -31,7 +32,10 @@ def pipe_line(data_source: AbstractDataSource) -> None:
 
     data_access = DataAccess.instance()
     data_access.init(data_source)
-    data_access.check_hist()
+
+    if sys.argv[1]:
+        print("Run sh")
+        data_access.check_hist()
 
     dataset.organization_data = data_access.fetch_organization_data()
     dataset.resource_data = data_access.fetch_resource_data()

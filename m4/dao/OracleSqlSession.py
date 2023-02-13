@@ -86,8 +86,8 @@ class OracleSqlSession(AbstractSession):
         if self._connection is None:
             raise DataSourceError('Data Source session is not initialized')
 
+        cursor = self._connection.cursor()
         try:
-            cursor = self._connection.cursor()
             cursor.executemany(sql_template, data_list)
             self._connection.commit()
             return True
@@ -99,8 +99,8 @@ class OracleSqlSession(AbstractSession):
 
     def execute_procedure(self, procedure_name: str, params):
         """
-        DB 에 저장된 프로시져를 호출하는 처리
-        :param procedure_name: procedure name
+        DB 에 저장된 프로시져를 호출하는
+        :param procedure_name: procedure name처리
         :param params: procedure 파라미터
         :return: True/False : 성공 여부
        """

@@ -12,8 +12,8 @@ class ResourceDAO(AbstractDAO, SingletonInstance):
     """
 
     # TODO: csv load -> DB load 변경 필요
-    @classmethod
-    def read(self, session: AbstractSession, **params):
+    @staticmethod
+    def read(session: AbstractSession, **params):
         """
         Data Source로부터 리스트 데이터를 조회
         :param session: AbstractSession 인스턴스
@@ -27,27 +27,24 @@ class ResourceDAO(AbstractDAO, SingletonInstance):
 
         return ret
 
-
     def execute(self, session: AbstractSession, data: pd.DataFrame) -> bool:
         """
         Data Source에 대한 CUD를 실행
         :param session: AbstractSession 인스턴스
-        :param data_list: CUD 대상 데이터
+        :param data: CUD 대상 데이터
         :return: True/False
         """
-        delete_query = \
-        """
+        delete_query = """
         DELETE FROM TIBERO.TSC_FORST_ORG_GROUP_RESRCE_RECND
         WHERE STDR_YY = ?
           AND ORG_GROUP_ID = ?
           AND CMYN_RSCD = ?
         """
-        insert_query = \
-        """
+        insert_query = """
         INSERT INTO TIBERO.TSC_FORST_ORG_GROUP_RESRCE_RECND
-        (STDR_YY, ORG_GROUP_ID, CMYN_RSCD, FORST_RKING, FORST_AT, CALT_RKING, CRTR_ID, LAST_MODUSR_ID, CREAT_DT, LAST_MODF_DT)
-        VALUES
-        (?,?,?,?,?,?,?,?,?,?)
+        (STDR_YY, ORG_GROUP_ID, CMYN_RSCD, FORST_RKING, FORST_AT, 
+        CALT_RKING, CRTR_ID, LAST_MODUSR_ID, CREAT_DT, LAST_MODF_DT)
+        VALUES (?,?,?,?,?,?,?,?,?,?)
         """
         delete_data = data[['STDR_YY', 'ORG_GROUP_ID', 'CMYN_RSCD']].drop_duplicates().values.tolist()
         insert_data = data.values.tolist()
@@ -55,5 +52,5 @@ class ResourceDAO(AbstractDAO, SingletonInstance):
             session.execute(delete_query, delete_data)
             session.execute(insert_query, insert_data)
             return True
-        except:
+        except Warning:
             return False

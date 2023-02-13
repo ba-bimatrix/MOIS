@@ -1,6 +1,4 @@
 
-import os
-
 from m4.common.SingletonInstance import SingletonInstance
 from m4.dao.AbstractDataSource import AbstractDataSource
 from m4.ApplicationConfiguration import ApplicationConfiguration

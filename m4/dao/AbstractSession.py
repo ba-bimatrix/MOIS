@@ -37,7 +37,7 @@ class AbstractSession(metaclass=ABCMeta):
         """
 
     @abstractmethod
-    def execute(self, sql_template: str, data_list: list):
+    def execute(self, sql_template: str, data_list: object):
         """
         CRUD 쿼리문을 실행하는 처리
         :param sql_template: sql template

@@ -58,7 +58,7 @@ class OrganizationCluster(SingletonInstance):
         try:
             min_n_clusters = params.get('MIN_N_CLUSTERS')
             max_n_clusters = params.get('MAX_N_CLUSTERS')
-        except:
+        except Warning:
             min_n_clusters = 2
             max_n_clusters = 10
 

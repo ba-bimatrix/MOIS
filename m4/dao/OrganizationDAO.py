@@ -10,15 +10,15 @@ class OrganizationDAO(AbstractDAO, SingletonInstance):
     Organization Data Access Object
     """
 
-    def read(self, session: AbstractSession, param):
+    @staticmethod
+    def read(session: AbstractSession, param):
         """
         Data Source로부터 리스트 데이터를 조회
         :param session: AbstractSession 인스턴스
-        :param params: 파라미터 데이터
+        :param param: 파라미터 데이터
         :return: DataFrame
         """
-        select_query = \
-        """
+        select_query = """
         WITH ANALY_PERIOD AS (
                     SELECT TO_CHAR(ADD_MONTHS(SYSDATE, -LEVEL*12),'YYYY') AS STDR_YY 
                         FROM DUAL CONNECT BY LEVEL<=?
@@ -85,18 +85,16 @@ class OrganizationDAO(AbstractDAO, SingletonInstance):
         """
         Data Source에 대한 CUD를 실행
         :param session: AbstractSession 인스턴스
-        :param data_list: CUD 대상 데이터
+        :param data: CUD 대상 데이터
         :return: True/False
         """
-        delete_query = \
-        """
+        delete_query = """
         DELETE FROM TIBERO.TSC_FORST_ORG_GROUP
         WHERE STDR_YY = ?
           AND ORG_CD  = ?
           AND ORG_GROUP_ID = ?
         """
-        insert_query = \
-        """
+        insert_query = """
         INSERT INTO TIBERO.TSC_FORST_ORG_GROUP 
         (STDR_YY, ORG_CD, ORG_GROUP_ID, FORST_AT, CRTR_ID, LAST_MODUSR_ID, CREAT_DT, LAST_MODF_DT) 
         VALUES 
@@ -108,5 +106,5 @@ class OrganizationDAO(AbstractDAO, SingletonInstance):
             session.execute(delete_query, delete_data)
             session.execute(insert_query, insert_data)
             return True
-        except:
+        except Warning:
             return False

@@ -1,5 +1,4 @@
 import pandas as pd
-import numpy as np
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
@@ -8,7 +7,6 @@ from m4.common.SingletonInstance import SingletonInstance
 from m4.process.Dataset import Dataset
 
 from sklearn.preprocessing import MinMaxScaler, StandardScaler, RobustScaler, OneHotEncoder
-from sklearn.compose import ColumnTransformer
 
 
 class PreProcessor(SingletonInstance):

@@ -1,6 +1,5 @@
 from pandas import DataFrame
 from datetime import datetime
-import jpype.dbapi2
 
 from m4.common.SingletonInstance import SingletonInstance
 from m4.dao.AbstractDataSource import AbstractDataSource
@@ -38,8 +37,7 @@ class DataAccess(SingletonInstance):
 
     def check_hist(self) -> bool:
 
-        hist_list = self._session.select(
-        """
+        hist_list = self._session.select("""
         SELECT 
             STDR_YY,
             CRTR_ID

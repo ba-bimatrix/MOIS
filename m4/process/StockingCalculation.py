@@ -1,4 +1,5 @@
 from pandas import DataFrame
+from statsmodels.api import OLS
 
 from m4.common.SingletonInstance import SingletonInstance
 from m4.ApplicationConfiguration import ApplicationConfiguration

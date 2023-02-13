@@ -29,7 +29,7 @@ class AbstractDataSource(metaclass=ABCMeta):
         """
 
     @abstractmethod
-    def close(self):
+    def close(self, session):
         """
         DataSource 비 사용 상태로 전환
         :return: void

@@ -23,7 +23,7 @@ class PostProcessor(SingletonInstance):
         self._clust_col = config.parameter("CLUSTER_COL")
         self._execute_date = config.parameter("EXECUTE_DATE")
         self._date_column = config.parameter("DATE_COL")
-        self._user_id = 'skgo'
+        self._user_id = config.parameter("CRTR_ID")
         self._stdr_yy = datetime.now().year
         self._execute_date = config.parameter("EXECUTE_DATE")
         self._run_dt = datetime.now().strftime('%Y%m%d')
