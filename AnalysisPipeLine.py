@@ -18,6 +18,7 @@ import os
 import sys
 from datetime import datetime
 import warnings
+from jpype._jexception import JException
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
@@ -83,6 +84,8 @@ def main():
         logger.info("pipeline started")
         pipe_line(data_source)
         logger.info("pipeline ended")
+    except JException as e:
+        logger.errer(e)
     except DataSourceError as e:
         logger.error(e)
     except ProcessException as e:
