@@ -85,7 +85,7 @@ def main():
         pipe_line(data_source)
         logger.info("pipeline ended")
     except JException as e:
-        logger.errer(e)
+        logger.error(e)
     except DataSourceError as e:
         logger.error(e)
     except ProcessException as e:
