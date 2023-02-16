@@ -16,7 +16,6 @@ class TiberoDataSource(AbstractDataSource, SingletonInstance):
         """
         super(__class__, self).__init__()
 
-    # TODO: 현재 기관특성데이터만 DB에서 불러옴, 다른 csv도 DB에서 불러와야함
     def init(self, config: ApplicationConfiguration):
         self._jclassname = config.parameter("DS.CONNECTION.JCLASSNM")
         self._url = config.parameter("DS.CONNECTION.URL")

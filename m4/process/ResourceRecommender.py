@@ -10,10 +10,13 @@ from surprise.model_selection import cross_validate
 
 class ResourceRecommender(SingletonInstance):
 
-    _execute_date: object = None
-    _reco_dimension: list = None
-    _value_col: object = None
-    _clust_nm: object = None
+    config: ApplicationConfiguration = None
+    _clust_col: str = None
+    _organ_col: str = None
+    _mater_col: str = None
+    _value_col: str = None
+    _recommend_col: list = None
+    _execute_date: str = None
 
     def __init__(self):
         """
@@ -21,9 +24,11 @@ class ResourceRecommender(SingletonInstance):
         """
         config = ApplicationConfiguration.instance()
 
-        self._reco_dimension = config.parameter("RECO_DIMENSION")
+        self._clust_col = config.parameter("CLUSTER_COL")
+        self._organ_col = config.parameter("ORGAN_COL")
+        self._mater_col = config.parameter("MATER_COL")
         self._value_col = config.parameter("VALUE_COL")
-        self._clust_nm = config.parameter("CLUSTER_COL")
+        self._recommend_col = [self._organ_col, self._mater_col, self._value_col]
         self._execute_date = config.parameter("EXECUTE_DATE")
 
     def recommend(self, resource_data: pd.DataFrame) -> pd.DataFrame:
@@ -32,7 +37,7 @@ class ResourceRecommender(SingletonInstance):
         :return: DataFrame
         """
         reader = Reader()
-        rating_data = Dataset.load_from_df(resource_data[self._reco_dimension], reader)
+        rating_data = Dataset.load_from_df(resource_data[self._recommend_col], reader)
 
         models = {"SVD": SVD(), "KNNWithZScore": KNNWithZScore(), "KNNWithMeans": KNNWithMeans(),
                   "KNNBaseline": KNNBaseline(), "NMF": NMF(), "SlopeOne": SlopeOne(), "CoClustering": CoClustering()}
@@ -45,43 +50,19 @@ class ResourceRecommender(SingletonInstance):
         best_model = min(model_accu, key=lambda x: model_accu[x]["test_rmse"].mean())
         model = models[best_model]
 
-        result_df = pd.DataFrame(columns=[self._clust_nm] + self._reco_dimension)
-        for cluster, resources in resource_data.groupby(self._clust_nm):
-            resource = Dataset.load_from_df(resources[self._reco_dimension], reader)
-            cross_validate(model, resource, measures=["RMSE", "MAE"], cv=5, verbose=False)
+        result_df = pd.DataFrame(columns=[self._clust_col] + self._recommend_col)
+        for cluster, resources in resource_data.groupby(self._clust_col):
+            resource = Dataset.load_from_df(resources[self._recommend_col], reader).build_full_trainset()
+            model.fit(resource)
 
             result = []
-            for index, row in resources[self._reco_dimension].iterrows():
+            for index, row in resources[self._recommend_col].iterrows():
                 result.append((row[0], row[1], row[2]))
             result = model.test(result)
 
             for row in result:
-                row_df = pd.DataFrame(data=[[row[0], row[1], row[2]]], columns=self._reco_dimension)
-                row_df[self._clust_nm] = cluster
+                row_df = pd.DataFrame(data=[[row[0], row[1], row[2]]], columns=self._recommend_col)
+                row_df[self._clust_col] = cluster
                 result_df = pd.concat([result_df, row_df])
 
         return result_df
-
-
-if __name__ == '__main__':
-    print("Recommend test start")
-    import pandas as pd
-
-    test_params = {
-        "RECO_DIMENSION": ["ORGAN_CODE", "SUPPLIES_CODE", "VAL"],
-        "CLUSTER_COL": "CLUSTER",
-        "VALUE_COL": "VAL",
-        "EXECUTE_DATE": "202205"
-    }
-
-    config: ApplicationConfiguration = ApplicationConfiguration.instance()
-    config.init('m4.properties', test_params)
-
-    test_data = pd.read_csv('..\..\data\data_source\input_data.csv', encoding='cp949')
-    test_data[test_params["CLUSTER_COL"]] = "TEST"
-
-    recommender = ResourceRecommender()
-    print()
-    print("The result of recommend is")
-    print(recommender.recommend(test_data))
-    print("Recommend test success")

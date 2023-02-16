@@ -46,7 +46,7 @@ class OrganizationDAO(AbstractDAO, SingletonInstance):
         )
         SELECT 
                 STDR_YY,
-                ORG_CD,
+                OWNER_ORG_CD,
                 POPUL_CNT,
                 HOHOLD_CNT,
                 RESI_CNT,
@@ -91,16 +91,16 @@ class OrganizationDAO(AbstractDAO, SingletonInstance):
         delete_query = """
         DELETE FROM TIBERO.TSC_FORST_ORG_GROUP
         WHERE STDR_YY = ?
-          AND ORG_CD  = ?
+          AND OWNER_ORG_CD  = ?
           AND ORG_GROUP_ID = ?
         """
         insert_query = """
         INSERT INTO TIBERO.TSC_FORST_ORG_GROUP 
-        (STDR_YY, ORG_CD, ORG_GROUP_ID, FORST_AT, CRTR_ID, LAST_MODUSR_ID, CREAT_DT, LAST_MODF_DT) 
+        (STDR_YY, OWNER_ORG_CD, ORG_GROUP_ID, FORST_AT, CRTR_ID, LAST_MODUSR_ID, CREAT_DT, LAST_MODF_DT) 
         VALUES 
         (?,?,?,?,?,?,?,?)
         """
-        delete_data = data[['STDR_YY', 'ORG_CD', 'ORG_GROUP_ID']].drop_duplicates().values.tolist()
+        delete_data = data[['STDR_YY', 'OWNER_ORG_CD', 'ORG_GROUP_ID']].drop_duplicates().values.tolist()
         insert_data = data.values.tolist()
         try:
             session.execute(delete_query, delete_data)

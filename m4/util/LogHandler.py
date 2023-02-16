@@ -30,3 +30,6 @@ class LogHandler(SingletonInstance):
 
     def get_logger(self) -> logging.Logger:
         return self._logger
+
+    def info(self, param):
+        pass

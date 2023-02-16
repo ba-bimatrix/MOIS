@@ -12,14 +12,15 @@ from m4.process.algorithm.SimpleLstm import SimpleLstm
 
 
 class NecessaryForecast(SingletonInstance):
+
+    config: ApplicationConfiguration = None
+    _execute_date = None
     _input_period = None
-    _dimension = []
+    _forecast_dimension = []
     _date_column = None
     _value_column = None
-    _execute_date = None
     _forecast_dataset_columns = []
     _validateion_dataset_columns = []
-
     _algorithms = []
     _forecast_period = None
     _validation_period = None
@@ -32,13 +33,11 @@ class NecessaryForecast(SingletonInstance):
 
         self._execute_date = config.parameter("EXECUTE_DATE")
         self._input_period = config.parameter("FORECAST_INPUT_PERIOD")
-        self._dimension = config.parameter("FORECAST_DIMENSION")
-        # self._date_column = config.parameter("FORECAST_DATE_COL")
-        self._date_column = config.parameter("DATE_COL")
-        # self._value_column = config.parameter("FORECAST_VALUE_COL")
+        self._forecast_dimension = [config.parameter("CLUSTER_COL"), config.parameter("MATER_COL")]
+        self._date_column = config.parameter("FORECAST_DATE")
         self._value_column = config.parameter("VALUE_COL")
-        self._forecast_dataset_columns = self._dimension + ['STAT_CD', 'FCST_CNT']
-        self._validateion_dataset_columns = self._dimension + ['STAT_CD', 'RMSE']
+        self._forecast_dataset_columns = self._forecast_dimension + ['STAT_CD', 'FCST_CNT']
+        self._validateion_dataset_columns = self._forecast_dimension + ['STAT_CD', 'RMSE']
 
         self._algorithms = config.parameter("FORECAST_ALGORITHMS")
         self._forecast_period = config.parameter("FORECAST_PERIOD")
@@ -69,7 +68,7 @@ class NecessaryForecast(SingletonInstance):
         result = pd.concat((result, one_result))
         accuracy = pd.concat((accuracy, one_accu))
 
-        params = {"dimension": self._dimension,
+        params = {"dimension": self._forecast_dimension,
                   "value_column": self._value_column,
                   "train_size": config.parameter("LSTM_TRAIN_SIZE"),
                   "window_input": config.parameter("LSTM_WINDOW_INPUT"),
@@ -99,7 +98,7 @@ class NecessaryForecast(SingletonInstance):
 
         warnings.filterwarnings('ignore')
 
-        for dim_values, splitted_data in input_data.groupby(self._dimension):
+        for dim_values, splitted_data in input_data.groupby(self._forecast_dimension):
             y_hat, valid = algorithm.forecast(splitted_data[self._value_column][-self._input_period:],
                                               self._forecast_period, self._validation_period, params)
 

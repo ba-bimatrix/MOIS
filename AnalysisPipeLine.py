@@ -12,6 +12,7 @@ from m4.process.OrganizationCluster import OrganizationCluster
 from m4.process.ResourceRecommender import ResourceRecommender
 from m4.process.NecessaryForecast import NecessaryForecast
 from m4.process.StockingCalculation import StockingCalculation
+from m4.process.UserRecommender import UserRecommender
 from m4.process.PostProcessor import PostProcessor
 
 import os
@@ -34,16 +35,19 @@ def pipe_line(data_source: AbstractDataSource) -> None:
     data_access = DataAccess.instance()
     data_access.init(data_source)
 
+    # sys.argv == True, check whether run or not, User define batch
+    # sys.argv == None, run regular batch
     if len(sys.argv) > 1 and sys.argv[1]:
         data_access.check_hist()
     else:
         config = ApplicationConfiguration.instance()
         config.add_params('STDR_YY', datetime.now().year)
-        config.add_params('CRTR_ID', 'SYSTEM')
+        config.add_params('OPERTOR_ID', 'SYSTEM')
 
     dataset.organization_data = data_access.fetch_organization_data()
     dataset.resource_data = data_access.fetch_resource_data()
     dataset.input_data = data_access.fetch_input_data()
+    dataset.user_data = data_access.fetch_user_data()
 
     dataset = PreProcessor.instance().process_cluster(dataset)
     dataset.clustering = OrganizationCluster.instance().cluster(dataset.pre_processing_organization_data)
@@ -54,7 +58,11 @@ def pipe_line(data_source: AbstractDataSource) -> None:
     dataset = PreProcessor.instance().process_forecast(dataset)
     dataset.forecast = NecessaryForecast.instance().forecast(dataset.pre_processing_input_data)
 
-    dataset.stocking_calculation = StockingCalculation.instance().calculation(dataset.pre_processing_input_data)
+    dataset = PreProcessor.instance().process_stocking(dataset)
+    dataset.stocking_calculation = StockingCalculation.instance().calculation(dataset.pre_processing_resource_data)
+
+    dataset = PreProcessor.instance().process_user_recommend(dataset)
+    dataset.user_recommend = UserRecommender.instance().recommend(dataset.pre_processing_user_data)
 
     dataset = PostProcessor.instance().process(dataset)
 
@@ -62,6 +70,8 @@ def pipe_line(data_source: AbstractDataSource) -> None:
     data_access.save_recommend(dataset.recommend)
     data_access.save_forecast(dataset.forecast)
     data_access.save_stocking_calculation(dataset.stocking_calculation)
+    data_access.save_user_recommend(dataset.user_recommend)
+
     data_access.close_process()
 
 

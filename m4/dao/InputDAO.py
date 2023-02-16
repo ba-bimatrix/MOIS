@@ -2,8 +2,7 @@ from m4.common.SingletonInstance import SingletonInstance
 from m4.dao.AbstractDAO import AbstractDAO
 from m4.dao.AbstractSession import AbstractSession
 
-import pandas as pd  # delete after
-from m4.ApplicationConfiguration import ApplicationConfiguration  # delete after
+import pandas as pd
 
 
 class InputDAO(AbstractDAO, SingletonInstance):
@@ -13,20 +12,38 @@ class InputDAO(AbstractDAO, SingletonInstance):
 
     # TODO: csv load -> DB load 변경 필요
     @classmethod
-    def read(cls, session: AbstractSession):
+    def read(cls, session: AbstractSession, params: dict):
         """
         Data Source로부터 리스트 데이터를 조회
         :return: DataFrame
         """
+        select_query = f"""
+        WITH TRNSC_ACTION AS (
+            SELECT 2 TRNSC_ACTION_CD FROM DUAL UNION
+            SELECT 4 TRNSC_ACTION_CD FROM DUAL
+        )
+        SELECT 
+            TO_CHAR(TRNSC_DT,'YYYYMM') {params["DATE"]}, OWNER_ORG_CD ,ANNAME_CD,
+            SUM(TRNSC_QTY) {params["VAL"]}
+        FROM TIBERO.TSC_MTRIL_TRNSC TRNSC
+            LEFT JOIN TIBERO.TMD_REPRSNT_CD_ANNAME ANNAME
+            ON TRNSC.CMYN_RSCD = ANNAME.CMYN_RSCD
+        WHERE TRNSC_ACTION_CD IN (SELECT TRNSC_ACTION_CD FROM TRNSC_ACTION)
+        GROUP BY TO_CHAR(TRNSC_DT,'YYYYMM'), OWNER_ORG_CD ,ANNAME_CD
+        UNION
+        SELECT 
+            TO_CHAR(TRNSC_DT,'YYYYMM') {params["DATE"]}, OWNER_ORG_CD ,ANNAME_CD,
+            SUM(TRNSC_QTY) {params["VAL"]}
+        FROM TIBERO.TSC_MTRIL_TRNSC_ARCHV ARCHV
+            LEFT JOIN TIBERO.TMD_REPRSNT_CD_ANNAME ANNAME
+            ON ARCHV.CMYN_RSCD = ANNAME.CMYN_RSCD
+        WHERE TRNSC_ACTION_CD IN (SELECT TRNSC_ACTION_CD FROM TRNSC_ACTION)
+        GROUP BY TO_CHAR(TRNSC_DT,'YYYYMM'), OWNER_ORG_CD ,ANNAME_CD
+        """
 
-        config = ApplicationConfiguration.instance()
-        ret = pd.read_csv(
-            config.find("FileSource", "file.directory") + "/" + config.find("FileSource", "file.input_data"),
-            dtype=object)
+        result = session.select(select_query)
 
-        # value_column = ApplicationConfiguration.instance().parameter("FORECAST_VALUE_COL")
-        value_column = ApplicationConfiguration.instance().parameter("VALUE_COL")
-        return ret.astype({value_column: "int32"})
+        return pd.DataFrame(data=result['data'], columns=result['columns'])
 
     def execute(self, session: AbstractSession, data: pd.DataFrame):
         """
@@ -38,18 +55,18 @@ class InputDAO(AbstractDAO, SingletonInstance):
         delete_query = """
         DELETE FROM TIBERO.TSC_FORST_ORG_RESRCE_NE
         WHERE STDR_YY   = ?
-          AND CMYN_RSCD = ?
-          AND ORG_CD    = ?
+          AND ANNAME_CD = ?
+          AND OWNER_ORG_CD = ?
           AND STDR_MT   = ?
         """
         insert_query = """
         INSERT INTO TIBERO.TSC_FORST_ORG_RESRCE_NE
-        (STDR_YY, CMYN_RSCD, ORG_CD, STDR_MT, ORG_GROUP_ID, GROUP_FORST_NE_QTY, FORST_NE_QTY, FORST_RATIO, 
+        (STDR_YY, ANNAME_CD, OWNER_ORG_CD, STDR_MT, ORG_GROUP_ID, GROUP_FORST_NE_QTY, FORST_NE_QTY, FORST_RATIO, 
         FORST_AT, CALT_RATIO, CRTR_ID, LAST_MODUSR_ID, CREAT_DT, LAST_MODF_DT)
         VALUES
         (?,?,?,?,?,?,?,?,?,?,?,?,?,?)
         """
-        delete_data = data[['STDR_YY', 'CMYN_RSCD', 'ORG_CD', 'STDR_MT']].drop_duplicates().values.tolist()
+        delete_data = data[['STDR_YY', 'ANNAME_CD', 'OWNER_ORG_CD', 'STDR_MT']].drop_duplicates().values.tolist()
         insert_data = data.values.tolist()
         try:
             session.execute(delete_query, delete_data)
