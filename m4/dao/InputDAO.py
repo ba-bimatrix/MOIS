@@ -10,7 +10,6 @@ class InputDAO(AbstractDAO, SingletonInstance):
     Input Data Access Object
     """
 
-    # TODO: csv load -> DB load 변경 필요
     @classmethod
     def read(cls, session: AbstractSession, params: dict):
         """

@@ -185,5 +185,11 @@ class DataAccess(SingletonInstance):
             result_msg = 'Fail'
         self._logger.info(f'Saving recommend result is {result_msg}')
 
-    def save_user_recommend(self, recommend: DataFrame):
+    def save_user_recommend(self, user_recommend: DataFrame):
+        result_msg = self._user_dao.execute(self._session, user_recommend)
+        if result_msg:
+            result_msg = 'Success'
+        else:
+            result_msg = 'Fail'
+        self._logger.info(f'Saving recommend result is {result_msg}')
         return None

@@ -19,6 +19,7 @@ class UserDAO(AbstractDAO, SingletonInstance):
         :param session: AbstractSession 인스턴스
         :param params: 파라미터 데이터
         :return: DataFrame
+        OUTPUT: YYMM(날짜), USER_ID(사용자), PRGM_URL(화면), LOG_CNT(횟수)
         """
         if params['DATE'] == 'YYMM':
             date_format = 'YYYYMM'
@@ -57,9 +58,11 @@ class UserDAO(AbstractDAO, SingletonInstance):
         insert_query = """
         INSERT INTO TIBERO.TIM_USER_RECOMM
         (STDR_DE, OWNER_ORG_CD, OWNER_FULL_ORG_NM, OWNER_DEPT_CD, OWNER_ID, 
-        ORG_GROUP_ID, RECOMM1_DASH, RECOMM2_DASH, RECOMM1_STUR, RECOMM2_STUR, RECOMM1_UNST, RECOMM2_UNST)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
+        ORG_GROUP_ID, RECOMM1_DASH, RECOMM2_DASH, RECOMM1_STUR, RECOMM2_STUR, RECOMM1_UNST, RECOMM2_UNST, CREAT_DT,
+        LAST_MODF_DT)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """
+
         delete_data = data[['STDR_DE', 'OWNER_ORG_CD', 'OWNER_DEPT_CD', 'OWNER_ID']].drop_duplicates().values.tolist()
         insert_data = data.values.tolist()
 

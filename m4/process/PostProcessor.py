@@ -14,7 +14,6 @@ class PostProcessor(SingletonInstance):
     _execute_date = None
     _date_column = None
 
-    # TODO: 생성/수정 정보 DB에서 받아오게 변경 필요
     def __init__(self):
         """
         생성자
@@ -32,7 +31,12 @@ class PostProcessor(SingletonInstance):
         self._rank_limit = config.parameter("RANKING_LIMIT")
         self._value_col = config.parameter("VALUE_COL")
 
-    # TODO: 후에 리팩토링 필요
+        self._user_col = config.parameter("USER_COL")
+        self._item_col = config.parameter("ITEM_COL")
+        self._user_grp_cd = 'ORG_GROUP_ID'
+        self._user_dim = [self._user_col, self._item_col]
+        self._user_val = config.parameter("USER_VAL")
+
     def process(self, dataset: Dataset) -> Dataset:
         """Post-processing All
         :param : dataset: Dataset
@@ -53,6 +57,9 @@ class PostProcessor(SingletonInstance):
         dataset.stocking_calculation = self._calcu_stocking_date(dataset)
         dataset.stocking_calculation = self._calcu_stocking_ratio(dataset)
         dataset.stocking_calculation = self._match_stocking_format(dataset)
+
+        dataset.user_recommend = self._calcu_user_ranking(dataset)
+        dataset.user_recommend = self._match_user_format(dataset)
 
         return dataset
 
@@ -185,9 +192,37 @@ class PostProcessor(SingletonInstance):
         return stocking[['STDR_YY', 'OWNER_ORG_CD', 'ANNAME_CD', 'WRHOUS_CD', 'FORST_RATIO', 'FORST_AT', 'CALT_RATIO',
                          'CRTR_ID', 'LAST_MODUSR_ID', 'CREAT_DT', 'LAST_MODF_DT']]
 
-    # TODO: 사용자 추천 결과 후 처리 로직 필요
-    def _calcu_user_ranking(self):
-        return None
+    # TODO: 후에 RANK를 화면 종류별로 해주어야함.
+    def _calcu_user_ranking(self, dataset: Dataset) -> pd.DataFrame:
+        user_recommend = dataset.user_recommend.copy()
+        user_recommend['RECO_RANK'] = user_recommend.groupby(self._user_dim)[self._user_val].rank(method='dense')
+        user_recommend = user_recommend[user_recommend['RECO_RANK'] <= 2]
 
-    def _match_user_format(self):
-        return None
+        return user_recommend
+
+    # TODO: 후에 화면에 따른 피벗 컬럼명을 생성해주어야함.
+    def _match_user_format(self, dataset: Dataset) -> pd.DataFrame:
+        user_recommend = dataset.user_recommend.copy()
+        user_grp_cd = user_recommend[[self._user_col, self._user_grp_cd]]
+        user_recommend['RECO_COL'] = user_recommend['RECO_RANK'].apply(lambda x: f'RECOMM{int(x)}_DASH')
+        user_recommend = user_recommend.pivot_table(index=self._user_col, columns='RECO_COL', values=self._item_col,
+                                                    aggfunc='first').reset_index()
+        user_recommend = pd.merge(user_recommend, user_grp_cd, how='left', on=self._user_col)
+        user_recommend['RECOMM2_DASH'] = ''
+        user_recommend['RECOMM2_STUR'] = ''
+        user_recommend['RECOMM1_STUR'] = ''
+        user_recommend['RECOMM2_STUR'] = ''
+        user_recommend['RECOMM1_UNST'] = ''
+        user_recommend['RECOMM2_UNST'] = ''
+
+        user_recommend['STDR_DE'] = self._stdr_yy
+        user_recommend['OWNER_ORG_CD'] = ''
+        user_recommend['OWNER_DEPT_CD'] = ''
+        user_recommend['OWNER_FULL_ORG_NM'] = ''
+        user_recommend['OWNER_ID'] = user_recommend[self._user_col]
+        user_recommend['CREAT_DT'] = self._run_dt
+        user_recommend['LAST_MODF_DF'] = self._run_dt
+
+        return user_recommend[['STDR_DE', 'OWNER_ORG_CD', 'OWNER_FULL_ORG_NM', 'OWNER_DEPT_CD', 'OWNER_ID',
+                               'ORG_GROUP_ID', 'RECOMM1_DASH', 'RECOMM2_DASH', 'RECOMM1_STUR', 'RECOMM2_STUR',
+                               'RECOMM1_UNST', 'RECOMM2_UNST', 'CREAT_DT', 'LAST_MODF_DF']]

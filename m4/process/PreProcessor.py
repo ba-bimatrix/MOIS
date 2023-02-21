@@ -2,6 +2,7 @@ import pandas as pd
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from numpy import log1p
+from sklearn.preprocessing import StandardScaler
 
 from m4.ApplicationConfiguration import ApplicationConfiguration
 from m4.common.SingletonInstance import SingletonInstance
@@ -40,6 +41,11 @@ class PreProcessor(SingletonInstance):
         self._region_col = config.parameter("REGION_COL")
         self._warehouse_col = config.parameter("WAREHOUSE_COL")
 
+        self._user_col = config.parameter("USER_COL")
+        self._item_col = config.parameter("ITEM_COL")
+        self._user_dimension = [self._user_col, self._item_col]
+        self._user_val_col = config.parameter("USER_VAL")
+
         self._input_period = config.parameter("FORECAST_INPUT_PERIOD")
         self._forecast_date = config.parameter("FORECAST_DATE")
         self._resource_date = config.parameter("RESOURCE_DATE")
@@ -59,14 +65,16 @@ class PreProcessor(SingletonInstance):
         :return:
         """
         dataframe = self._aggregate_cluster(dataset.organization_data)
-        dataframe[['POPUL_CNT', 'HOHOLD_CNT', 'RESI_CNT', 'BUGE_AMT', 'FULL_SQUARE',
-                   'ROAD_SQUARE', 'CULT_SQUARE', 'FORE_SQUARE', 'RIVER_SQUARE', 'PBORD_AMT',
-                   'TRSPT_AMT', 'MNCP_AMT', 'LCPB_AMT', 'GVN_MNG_SQUARE', 'GVN_SPRT_SQUARE',
-                   'ETC_SQUARE', 'DMG_STORM_FLOOD_AMT']] = log1p(
-            dataframe[['POPUL_CNT', 'HOHOLD_CNT', 'RESI_CNT', 'BUGE_AMT', 'FULL_SQUARE',
+        scaled_col = ['POPUL_CNT', 'HOHOLD_CNT', 'RESI_CNT', 'BUGE_AMT', 'FULL_SQUARE',
                        'ROAD_SQUARE', 'CULT_SQUARE', 'FORE_SQUARE', 'RIVER_SQUARE', 'PBORD_AMT',
                        'TRSPT_AMT', 'MNCP_AMT', 'LCPB_AMT', 'GVN_MNG_SQUARE', 'GVN_SPRT_SQUARE',
-                       'ETC_SQUARE', 'DMG_STORM_FLOOD_AMT']])
+                       'ETC_SQUARE', 'DMG_STORM_FLOOD_AMT', 'COAST_LEN']
+        non_scaled_dataframe = dataframe[dataframe.columns.difference(scaled_col)]
+        dataframe[scaled_col] = log1p(dataframe[scaled_col])
+        dataframe = pd.concat([non_scaled_dataframe,
+                               pd.DataFrame(StandardScaler().fit_transform(dataframe[scaled_col]), columns=scaled_col)],
+                              axis=1)
+
         dataset.pre_processing_organization_data = dataframe
 
         return dataset
@@ -159,6 +167,11 @@ class PreProcessor(SingletonInstance):
                                                                              as_index=False)[self._val_col].sum()
         return dataset
 
-    # TODO: 사용자 화면 추천에 대한 전처리 개발 필요
     def process_user_recommend(self, dataset: Dataset) -> Dataset:
+        dataframe = dataset.user_data.groupby(self._user_dimension, as_index=False)[self._user_val_col].count()
+        pivot_user_log = dataframe.pivot(index=self._user_col, columns=self._item_col,
+                                         values=self._user_val_col).fillna(0)
+
+        dataset.pre_processing_user_data = {'for_recommend': dataframe, 'for_clustering': pivot_user_log}
+
         return dataset

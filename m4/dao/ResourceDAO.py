@@ -11,7 +11,6 @@ class ResourceDAO(AbstractDAO, SingletonInstance):
     Resource Data Access Object
     """
 
-    # TODO: csv load -> DB load 변경 필요
     @staticmethod
     def read(session: AbstractSession, params: dict):
         """
